@@ -267,6 +267,7 @@ namespace JsonSharp {
         private static string getChars(int start, int count, string data) {
             string buff = "";
             for(int i = start; i < start+count; i++) {
+				if(i >= data.Length) break;
                 buff += data[i];
             }
             return buff;
