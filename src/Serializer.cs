@@ -29,60 +29,60 @@ namespace JsonSharp {
             int i = 0;
             foreach (String key in data.Keys) {
                 object value = data[key];
-                builder.Append("\"" + escape(key) + "\"" + ":");
+                builder.Append("\""+escape(key)+"\""+":");
                 stringify(builder, value);
 
                 i++;
-                if (i < data.Keys.Count) builder.Append(",");
+                if (i<data.Keys.Count) builder.Append(",");
             }
 
             builder.Append("}");
         }
 
         private static void stringify(StringBuilder builder, object value) {
-            if (value == null) {
+            if (value==null) {
                 //Null
                 builder.Append("null");
-            } else if(value is bool) {
+            } else if (value is bool) {
                 builder.Append((bool)value ? "true" : "false");
-            } else if(value is int) {
+            } else if (value is int) {
                 builder.Append((int)value);
-            } else if(value is byte) {
+            } else if (value is byte) {
                 builder.Append((byte)value);
-            } else if(value is short) {
+            } else if (value is short) {
                 builder.Append((short)value);
-            } else if(value is long) {
+            } else if (value is long) {
                 builder.Append((long)value);
-            } else if(value is float) {
+            } else if (value is float) {
                 builder.Append((float)value);
-            } else if(value is double) {
-                builder.Append((double) value);
+            } else if (value is double) {
+                builder.Append((double)value);
             } else if (value is uint) {
                 builder.Append((uint)value);
             } else if (value is ushort) {
                 builder.Append((ushort)value);
             } else if (value is ulong) {
                 builder.Append((ulong)value);
-            } else if (value is object[]) {
-                object[] array = (object[]) value;
+            } else if (value is Array) {
+                object[] array = (object[])value;
                 builder.Append("[");
-                for(int i = 0; i < array.Length; i++) {
+                for (int i = 0; i<array.Length; i++) {
                     stringify(builder, array[i]);
-                    if(i < array.Length-1) builder.Append(",");
+                    if (i<array.Length-1) builder.Append(",");
                 }
                 builder.Append("]");
-            } else if(value is string) {
+            } else if (value is string) {
                 String strVal = ((string)value);
                 //Escape our strings
                 builder.Append("\"");
                 builder.Append(escape(strVal));
                 builder.Append("\"");
-            } else if(value is Dictionary<String, Object>) {
+            } else if (value is Dictionary<String, Object>) {
                 serialize(builder, (Dictionary<String, Object>)value);
-            } else if(value is ISerializable) {
+            } else if (value is ISerializable) {
                 ISerializable s = (ISerializable)value;
                 stringify(builder, s.serialize());
-            } else if(value is Guid) {
+            } else if (value is Guid) {
                 stringify(builder, ((Guid)value).ToString());
             } else {
                 stringify(builder, (string)value.ToString());
@@ -92,6 +92,7 @@ namespace JsonSharp {
         private static string escape(String val) {
             return val
                 .Replace("\\", "\\\\")
+                .Replace("\"", "\\\"")
                 .Replace("\n", "\\n")
                 .Replace("\b", "\\b")
                 .Replace("\0", "\\0")
@@ -113,19 +114,20 @@ namespace JsonSharp {
                 .Replace("\\0", "\0")
                 .Replace("\\b", "\b")
                 .Replace("\\n", "\n")
+                .Replace("\\\"", "\"")
                 .Replace("\\\\", "\\")
             ;
         }
 
         private static bool isSpecialCharacter(char c) {
-            return c == '\\' || c == '\n' || c == '\b' || c == '\0' || c == '\a' || c == '\f' || c == '\r' || c == '\t' || c == '\v';
+            return c=='\n'||c=='\b'||c=='\0'||c=='\a'||c=='\f'||c=='\r'||c=='\t'||c=='\v';
         }
 
         public static Dictionary<string, object> unserialize(string data) {
-            if(data.Length < 2) throw new Exception("Not a valid JSON.");
-            
+            if (data.Length<2) throw new Exception("Not a valid JSON.");
+
             int index = skipIfWhitespace(0, data);
-            if(data[index] != '{') throw new Exception("Invalid Object");
+            if (data[index]!='{') throw new Exception("Invalid JSON, expected \"{\" at index " + index);
             index++;
             Dictionary<string, object> jsonObject = unserializeObject(ref index, data);
 
@@ -135,42 +137,47 @@ namespace JsonSharp {
         //Returns the index of the next non space character
         private static int skipWhitespace(int currentIndex, string data) {
             int indexStart = currentIndex+1;
-            if(indexStart >= data.Length || indexStart < 0) throw new Exception();
-            for(int i = indexStart; i < data.Length; i++) {
-                if(data[i] == ' ' || data[i] == '\n' || data[i] == '\r') continue;
+            if (indexStart>=data.Length||indexStart<0) throw new Exception();
+            for (int i = indexStart; i<data.Length; i++) {
+                if (data[i]==' '||data[i]=='\n'||data[i]=='\r') continue;
                 return i;
             }
             return data.Length;
         }
 
         private static int skipIfWhitespace(int currentIndex, string data) {
-            if (currentIndex >= data.Length || currentIndex < 0) throw new Exception();
-            if(data[currentIndex] != ' ' && data[currentIndex] != '\n' && data[currentIndex] != '\r') return currentIndex;
+            if (currentIndex>=data.Length||currentIndex<0) throw new Exception();
+            if (data[currentIndex]!=' '&&data[currentIndex]!='\n'&&data[currentIndex]!='\r') return currentIndex;
             return skipWhitespace(currentIndex, data);
         }
 
         private static Dictionary<string, object> unserializeObject(ref int index, string data) {
             Dictionary<string, object> jsonObject = new Dictionary<string, object>();
+            index=skipIfWhitespace(index, data);
+            if (data[index]=='}') {
+                index++;
+                return jsonObject;
+            }
             while (true) {
-                index = skipIfWhitespace(index, data);
+                index=skipIfWhitespace(index, data);
                 string key = unserializeString(ref index, data);//Get Key
-                index = skipIfWhitespace(index, data);
+                index=skipIfWhitespace(index, data);
 
-                if (data[index] != ':') throw new Exception("Missing \":\"");//Make sure key has a value
+                if (data[index]!=':') throw new Exception("Invalid JSON, expected \":\" at index " + index);//Make sure key has a value
                 index++;
 
-                index = skipIfWhitespace(index, data);
+                index=skipIfWhitespace(index, data);
                 object value = unserializeValue(ref index, data);//Get value
 
                 jsonObject.Add(key, value);//Append Value
-                index = skipIfWhitespace(index, data);
-                if(index >= data.Length) throw new Exception("Invalid JSON");//Validate
+                index=skipIfWhitespace(index, data);
+                if (index>=data.Length) throw new Exception("Invalid JSON");//Validate
 
-                if (data[index] == ',') {//Another element in the object
+                if (data[index]==',') {//Another element in the object
                     index++;
                     continue;
                 }
-                if(data[index] == '}') {//End of the object.
+                if (data[index]=='}') {//End of the object.
                     index++;
                     break;
                 }
@@ -181,26 +188,26 @@ namespace JsonSharp {
 
         private static object unserializeValue(ref int index, string data) {
             //Determine the type...
-            if (data[index] == '"') {
+            if (data[index]=='"') {
                 //Probably a string
                 return unescape(unserializeString(ref index, data, true));
-            } else if(getChars(index, 4, data) == "null") {
+            } else if (getChars(index, 4, data)=="null") {
                 //null
-                index += 4;
+                index+=4;
                 return null;
-            } else if(getChars(index, 4, data) == "true") {
+            } else if (getChars(index, 4, data)=="true") {
                 //true
-                index += 4;
+                index+=4;
                 return true;
-            } else if(getChars(index, 5, data) == "false") {
+            } else if (getChars(index, 5, data)=="false") {
                 //false
-                index += 5;
+                index+=5;
                 return false;
-            } else if(data[index] == '{') {
+            } else if (data[index]=='{') {
                 //Probably an object
                 index++;
                 return unserializeObject(ref index, data);
-            } else if(data[index] == '[') {
+            } else if (data[index]=='[') {
                 //Probably an array
                 index++;
                 return unserializeArray(ref index, data);
@@ -208,56 +215,56 @@ namespace JsonSharp {
 
             //Another type, we need the full data for
             string untilNext = "";//Basically we are going to read the data until we reach the next "," "}" "]" or "\""
-            for(int h = index; h < data.Length; h++) {
+            for (int h = index; h<data.Length; h++) {
                 char c = data[h];
-                if(isSpecialCharacter(c) || c == ',' || c == '}' || c == ']') break;
-                untilNext += c;
+                if (isSpecialCharacter(c)||c==','||c=='}'||c==']') break;
+                untilNext+=c;
             }
-            index += untilNext.Length;
+            index+=untilNext.Length;
 
             //Determine the type now? starting from shortest first
             byte b;
-            if(byte.TryParse(untilNext, out b)) {
+            if (byte.TryParse(untilNext, out b)) {
                 return b;
             }
 
             short s;
-            if(short.TryParse(untilNext, out s)) {
+            if (short.TryParse(untilNext, out s)) {
                 return s;
             }
 
             ushort us;
-            if(ushort.TryParse(untilNext, out us)) {
+            if (ushort.TryParse(untilNext, out us)) {
                 return us;
             }
 
             int i;
-            if(int.TryParse(untilNext, out i)) {
+            if (int.TryParse(untilNext, out i)) {
                 return i;
             }
 
             uint ui;
-            if(uint.TryParse(untilNext, out ui)) {
+            if (uint.TryParse(untilNext, out ui)) {
                 return ui;
             }
 
             long l;
-            if(long.TryParse(untilNext, out l)) {
+            if (long.TryParse(untilNext, out l)) {
                 return l;
             }
 
             ulong ul;
-            if(ulong.TryParse(untilNext, out ul)) {
+            if (ulong.TryParse(untilNext, out ul)) {
                 return ul;
             }
 
             float f;
-            if(float.TryParse(untilNext, out f)) {
+            if (float.TryParse(untilNext, out f)) {
                 return f;
             }
 
             double d;
-            if(double.TryParse(untilNext, out d)) {
+            if (double.TryParse(untilNext, out d)) {
                 return d;
             }
 
@@ -266,25 +273,31 @@ namespace JsonSharp {
 
         private static string getChars(int start, int count, string data) {
             string buff = "";
-            for(int i = start; i < start+count; i++) {
-				if(i >= data.Length) break;
-                buff += data[i];
+            for (int i = start; i<start+count; i++) {
+                if (i>=data.Length) break;
+                buff+=data[i];
             }
             return buff;
         }
 
-        private static string unserializeString(ref int index, string data, bool allowSpecialChars=false) {
-            if (data[index] != '"') throw new Exception("String missing first quotation.");
+        private static string unserializeString(ref int index, string data, bool allowSpecialChars = false) {
+            if (data[index]!='"') throw new Exception("Invalid string, expected \"\"\" at index " + index);
             string key = "";
             index++;
-            for (int i = index; i < data.Length; i++) {
+            for (int i = index; i<data.Length; i++) {
                 char c = data[i];
-                if (!allowSpecialChars && isSpecialCharacter(c)) throw new Exception("Invalid String");
-                if (c == '"') break;
-                key += c;
+                if (!allowSpecialChars&&isSpecialCharacter(c)) throw new Exception("Illegal special character \""+c+"\" at index " + index);
+                if (c=='"') {
+                    break;
+                }
+                key+=c;
+                if(c == '\\') {
+                    key += data[i+1];
+                    i+=1;
+                }
             }
-            index += key.Length;
-            if (data[index] != '"') throw new Exception("String missing last quotation.");
+            index+=key.Length;
+            if (data[index]!='"') throw new Exception("String missing last quotation.");
             index++;
             return key;
         }
@@ -292,20 +305,25 @@ namespace JsonSharp {
         private static object[] unserializeArray(ref int index, string data) {
             //Very similar to unserializeObject
             List<object> values = new List<object>();//Lists are easier
+            index=skipIfWhitespace(index, data);
+            if (data[index]==']') {
+                index++;
+                return values.ToArray();
+            }
             while (true) {
-                index = skipIfWhitespace(index, data);
+                index=skipIfWhitespace(index, data);
 
                 object value = unserializeValue(ref index, data);//Get value
                 values.Add(value);//Append Value
 
-                index = skipIfWhitespace(index, data);
-                if (index >= data.Length) throw new Exception("Invalid JSON");//Validate
+                index=skipIfWhitespace(index, data);
+                if (index>=data.Length) throw new Exception("Invalid JSON");//Validate
 
-                if (data[index] == ',') {//Another element in the array
+                if (data[index]==',') {//Another element in the array
                     index++;
                     continue;
                 }
-                if (data[index] == ']') {//End of the array.
+                if (data[index]==']') {//End of the array.
                     index++;
                     break;
                 }
