@@ -286,10 +286,10 @@ namespace JsonSharp {
             index++;
             for (int i = index; i<data.Length; i++) {
                 char c = data[i];
-                if (!allowSpecialChars&&isSpecialCharacter(c)) throw new Exception("Illegal special character \""+c+"\" at index " + index);
                 if (c=='"') {
                     break;
                 }
+                if (!allowSpecialChars&&isSpecialCharacter(c)) throw new Exception("Illegal special character \""+c+"\" at index " + index);
                 key+=c;
                 if(c == '\\') {
                     key += data[i+1];
