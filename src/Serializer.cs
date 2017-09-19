@@ -71,6 +71,16 @@ namespace JsonSharp {
                     if (i<array.Length-1) builder.Append(",");
                 }
                 builder.Append("]");
+            } else if(value is System.Collections.IList) {
+                //Treat as generic list.
+                System.Collections.IList e = (System.Collections.IList)value;
+                builder.Append("[");
+                foreach(object o in e) {
+                    stringify(builder, o);
+                    builder.Append(",");
+                }
+                builder.Length--;//Remove the comma too many.
+                builder.Append("]");
             } else if (value is string) {
                 String strVal = ((string)value);
                 //Escape our strings
