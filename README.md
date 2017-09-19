@@ -1,5 +1,5 @@
 # JSONSharp
-Simple JSON Parser and Unparser Library for C#. The library has support for many differnet object types, and most objects can be easily extended with the `IParser` Interface.
+Simple JSON Parser and Unparser Library for C#. The library has support for many differenet object types, and most objects can be easily extended with the `IParser` Interface.
 
 ## JSON Parsing
 By default the JSONSharp parser supports Serialization of either `IParser` Objects, or `Dictionary<String, Object>` types.
@@ -25,6 +25,7 @@ Debug.WriteLine(Serializer.serialize(person));
 As previously mentioned, Classes can inherit the ISerializable interface, which should be familiar for those used to the PHP JsonSerializable interace.
 
 Here's an example:
+
 **Person.cs:**
 ```CS
 public class Person : ISerializable {
@@ -104,8 +105,10 @@ foreach(string key in data.Keys) {
 }
 ```
 
-Objects can also be deserialized directly into an ISerializable object*
+Objects can also be deserialized directly into an ISerializable object (messily)
+
 Example:
+
 **Main.cs:**
 ```CS
 string text = System.IO.File.ReadAllText(@"test.json");
@@ -166,7 +169,7 @@ public class Person : ISerializable {
 As easy as that!
 
 ## To Note
-As I mentioned above there are a few issues when it comes to unserialization, most notably is the fact that the unserializer has to "asume" what the data type it's given is, I tend to use a "most likely" scenario but that may not be perfect for everyone.
+As I mentioned above there are a few issues when it comes to unserialization, most notably is the fact that the unserializer has to "assume" what the data type it's given is, I tend to use a "most likely" scenario but that may not be perfect for everyone.
 
 In the future I may allow a JSON Markup to be passed to the unserializer that will force certain types of unserialization but until then this is how it works.
 
@@ -191,8 +194,8 @@ test is udobule;
 In this case I would make the assumption that `test` is a `byte`, since it is the most likely.
 If test was changed to be 1000, then the parser would asume `test` is a `short`.
 
-Other times this can be an issue besides numbers is arrays...
-Given that we were using a `List<string>` on our `Person.cs` class, it was stored as a `string[]` when unserialized, this is because the parser assumes arrays by default... so you will need to conver the resulting array back to a list when unserializing.
+Other times that this can be an issue besides numbers is arrays...
+Given that we were using a `List<string>` on our `Person.cs` class, it was stored as a `string[]` when unserialized, this is because the parser assumes arrays by default... so you will need to convert the resulting array back to a list when unserializing.
 
 
 I will work on this library from time to time, however it's not a major priority for me right now, send me an email (dominic@domsplace.com) if you need something added/changed/fixed urgently and I'll see to it asap.
@@ -203,6 +206,7 @@ Some future plans I would like to eventually add:
  * Improve efficiency, the parsing and unserializing are fairly poor at the moment
  * Clean Code, the thing is rather spaghettified at the moment
  * Add custom parser/deparsers, this can be done now but could be "extended" in the future.
+ * "JSON Pretty Printing" and other formatting, currently only does a minified JSON print.
 
 
  
