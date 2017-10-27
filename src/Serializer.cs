@@ -133,6 +133,10 @@ namespace JsonSharp {
             return c=='\n'||c=='\b'||c=='\0'||c=='\a'||c=='\f'||c=='\r'||c=='\t'||c=='\v';
         }
 
+        private static bool isWhitespaceCharacter(char c) {
+            return c == ' ' || c == '\n' || c == '\r' || c == '\t';//Tab delimiter was causing some issues.
+        }
+
         public static Dictionary<string, object> unserialize(string data) {
             if (data.Length<2) throw new Exception("Not a valid JSON.");
 
@@ -149,7 +153,7 @@ namespace JsonSharp {
             int indexStart = currentIndex+1;
             if (indexStart>=data.Length||indexStart<0) throw new Exception();
             for (int i = indexStart; i<data.Length; i++) {
-                if (data[i]==' '||data[i]=='\n'||data[i]=='\r') continue;
+                if (isWhitespaceCharacter(data[i])) continue;
                 return i;
             }
             return data.Length;
@@ -157,7 +161,7 @@ namespace JsonSharp {
 
         private static int skipIfWhitespace(int currentIndex, string data) {
             if (currentIndex>=data.Length||currentIndex<0) throw new Exception();
-            if (data[currentIndex]!=' '&&data[currentIndex]!='\n'&&data[currentIndex]!='\r') return currentIndex;
+            if (!isWhitespaceCharacter(data[currentIndex])) return currentIndex;
             return skipWhitespace(currentIndex, data);
         }
 
